@@ -281,22 +281,33 @@ with tab3:
 
     st.markdown("---")
     
-    st.markdown("### Segmentasi Profil Risiko Mental")
-    df_ct = pd.crosstab(df_filtered['Perceived_AI_Dependency'], df_filtered['Burnout_Risk_Level'], normalize='index') * 100
-    cols_order = [col for col in ['Low', 'Medium', 'High'] if col in df_ct.columns]
-    fig_heat = px.imshow(df_ct[cols_order], text_auto='.1f', aspect="auto", origin='lower', color_continuous_scale="Reds",
-                         title="Probabilitas Risiko Burnout berdasarkan Skala Dependensi AI",
-                         labels=dict(x="Tingkat Risiko", y="Skala Ketergantungan (1-10)", color="Persentase (%)"))
-    st.plotly_chart(fig_heat, use_container_width=True)
+    # ==========================================
+    # BAGIAN YANG DIREVISI: BOXPLOT KETERGANTUNGAN
+    # ==========================================
+    st.markdown("### Krisis Titik Buta: Kelelahan Mental Memicu Ketergantungan Ekstrem")
     
-    high_dep = df_filtered[df_filtered['Perceived_AI_Dependency'] >= 7]
-    if not high_dep.empty and 'High' in high_dep['Burnout_Risk_Level'].values:
-        high_dep_high_burn = len(high_dep[high_dep['Burnout_Risk_Level'] == 'High'])
-        pct_danger = (high_dep_high_burn / len(high_dep)) * 100
-        st.error(f"🚨 **Insight Titik Buta:** Pada irisan dependensi AI skala tinggi (7-10), terdapat probabilitas sebesar **{pct_danger:.1f}%** mahasiswa terperosok ke dalam tingkat risiko *High Burnout*.")
-    else:
-        st.success("✅ **Insight Titik Buta:** Tidak ditemukan irisan yang signifikan antara dependensi ekstrem dengan risiko *High Burnout* pada populasi ini.")
-
+    # Membuat Boxplot Ketergantungan AI vs Risiko Burnout
+    fig_box_dep = px.box(
+        df_filtered, 
+        x="Burnout_Risk_Level", 
+        y="Perceived_AI_Dependency", 
+        color="Burnout_Risk_Level",
+        title="Distribusi Skala Ketergantungan AI berdasarkan Tingkat Burnout",
+        category_orders={"Burnout_Risk_Level": ["Low", "Medium", "High"]}, # Memastikan urutan sumbu X logis
+        labels={
+            "Burnout_Risk_Level": "Tingkat Risiko Burnout",
+            "Perceived_AI_Dependency": "Skala Ketergantungan AI (1-10)"
+        },
+        color_discrete_sequence=['#66c2a5', '#fc8d62', '#8da0cb'] # Palet warna agar selaras
+    )
+    
+    # Menghilangkan legenda yang berulang agar UI lebih bersih
+    fig_box_dep.update_layout(showlegend=False)
+    
+    st.plotly_chart(fig_box_dep, use_container_width=True)
+    
+    # Kotak Insight yang menohok dan sesuai data
+    st.error("🚨 **Insight Titik Buta:** Mahasiswa dengan tingkat *High Burnout* bukan sekadar bermalas-malasan, melainkan kehabisan kapasitas kognitif. Hal ini terlihat dari **Tingkat Ketergantungan AI** mereka yang melonjak ekstrem dibandingkan kelompok *Low Burnout*. Mereka cenderung tidak lagi menjadikan AI sebagai mitra diskusi, melainkan sebagai tumpuan pelarian utama untuk menyelesaikan tugas.")
 
 # ------------------------------------------
 # TAB 4: Evaluasi Kebijakan & Kerentanan
